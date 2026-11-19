@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine          # Official image; "alpine" = small download
+    container_name: registry-db
+    environment:
+      # Values come from .env. ":?" stops startup with an error if one is missing.
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      # 127.0.0.1 = reachable only from YOUR laptop, not from others on your Wi-Fi
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Named volume: data survives container restarts
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Docker checks every 5s whether Postgres is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

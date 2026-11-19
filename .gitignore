@@ -1,0 +1,27 @@
+# --- Secrets: NEVER commit these ---
+.env
+.env.*
+!.env.example
+
+# --- Python-generated files ---
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# --- Virtual environment ---
+.venv/
+
+# --- Testing & linting caches ---
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editors & OS ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
