@@ -91,6 +91,17 @@ class CitizenUpdate(_Input):
     _mobile = field_validator("mobile")(_normalize_mobile)
 
 
+class AadhaarLookup(_Input):
+    """Body for POST /citizens/lookup (sent in the body, never in the URL)."""
+
+    aadhaar: str = Field(examples=["2345 6789 0124"])
+
+    @field_validator("aadhaar")
+    @classmethod
+    def _aadhaar(cls, value: str) -> str:
+        return normalize_aadhaar(value)
+
+
 class ConsentGrant(_Input):
     purpose: ConsentPurpose
     # Which version of the privacy notice the citizen was shown, e.g. "v1.0" or "v2.3"
