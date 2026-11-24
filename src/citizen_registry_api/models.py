@@ -47,7 +47,7 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-class ConsentPurpose(str, enum.Enum):
+class ConsentPurpose(enum.StrEnum):
     """The specific reasons a citizen can consent to (DPDP: purpose limitation)."""
 
     SCHEME_ELIGIBILITY = "scheme_eligibility"
@@ -69,17 +69,11 @@ class Citizen(Base):
     district: Mapped[str | None] = mapped_column(String(100))
 
     # --- Aadhaar: never stored in plain text ---
-    aadhaar_hash: Mapped[str | None] = mapped_column(
-        String(64), unique=True
-    )  # HMAC-SHA256 hex
-    aadhaar_last4: Mapped[str | None] = mapped_column(
-        String(4)
-    )  # for display: XXXX-XXXX-1234
+    aadhaar_hash: Mapped[str | None] = mapped_column(String(64), unique=True)  # HMAC-SHA256 hex
+    aadhaar_last4: Mapped[str | None] = mapped_column(String(4))  # for display: XXXX-XXXX-1234
 
     # --- Housekeeping ---
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -104,12 +98,8 @@ class Consent(Base):
             values_callable=lambda e: [m.value for m in e],
         )
     )
-    notice_version: Mapped[str] = mapped_column(
-        String(20)
-    )  # which privacy notice they saw
-    granted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    notice_version: Mapped[str] = mapped_column(String(20))  # which privacy notice they saw
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     citizen: Mapped[Citizen] = relationship(back_populates="consents")
@@ -139,12 +129,6 @@ class AuditLog(Base):
         DateTime(timezone=True), server_default=func.now(), index=True
     )
     actor: Mapped[str] = mapped_column(String(100))  # which client/user did it
-    action: Mapped[str] = mapped_column(
-        String(50)
-    )  # e.g. "citizen.read", "consent.withdraw"
-    citizen_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("citizens.id"), index=True
-    )
-    details: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, server_default=text("'{}'::jsonb")
-    )
+    action: Mapped[str] = mapped_column(String(50))  # e.g. "citizen.read", "consent.withdraw"
+    citizen_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("citizens.id"), index=True)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))

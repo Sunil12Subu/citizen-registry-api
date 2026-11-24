@@ -1,0 +1,72 @@
+# Runs on every push to main and on every pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: this workflow can only READ the repository
+permissions:
+  contents: read
+
+# If you push again quickly, cancel the older run instead of running both
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+
+  test:
+    name: Tests (pytest + PostgreSQL)
+    runs-on: ubuntu-latest
+
+    # A real PostgreSQL 16, started fresh for this job and thrown away afterwards
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: registry_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci_user -d registry_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # Throwaway values for a throwaway database. These are NOT real secrets.
+    env:
+      DATABASE_URL: postgresql+psycopg://ci_user:ci_password@localhost:5432/registry_test
+      TEST_DATABASE_URL: postgresql+psycopg://ci_user:ci_password@localhost:5432/registry_test?connect_timeout=5
+      API_KEY: ci-api-key
+      ID_HASH_SECRET: ci-hash-secret
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Run tests
+        run: uv run pytest -v
+      - name: Models and migrations are in sync
+        run: uv run alembic check
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t citizen-registry-api:ci .
