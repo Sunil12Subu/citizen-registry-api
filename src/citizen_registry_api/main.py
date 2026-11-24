@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from citizen_registry_api import __version__
 from citizen_registry_api.errors import ConflictError, NotFoundError
-from citizen_registry_api.routers import citizens
+from citizen_registry_api.routers import citizens, consents, rights
 
 app = FastAPI(
     title="Citizen Registry API",
@@ -22,6 +22,8 @@ app = FastAPI(
 )
 
 app.include_router(citizens.router)
+app.include_router(consents.router)
+app.include_router(rights.router)
 
 
 @app.get("/health", tags=["Health"])
