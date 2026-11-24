@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16-alpine          # Official image; "alpine" = small download
     container_name: registry-db
-    restart: unless-stopped   # start again automatically when Docker Desktop starts
+    restart: unless-stopped            # start again automatically when Docker Desktop starts
     environment:
       # Values come from .env. ":?" stops startup with an error if one is missing.
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
@@ -20,6 +20,36 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # One-off job: apply database migrations, then exit
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment: &app-env
+      # Inside Docker the database host is the service name "db", not localhost
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=5
+      API_KEY: ${API_KEY:?set API_KEY in .env}
+      ID_HASH_SECRET: ${ID_HASH_SECRET:?set ID_HASH_SECRET in .env}
+      APP_ENV: ${APP_ENV:-production}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    container_name: registry-api
+    restart: unless-stopped
+    environment: *app-env
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully   # only start once migrations succeeded
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
