@@ -1,7 +1,7 @@
 [project]
 name = "citizen-registry-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "DPDP Act 2023-aware REST API for citizen records: consent, audit trail, masked identifiers."
 readme = "README.md"
 authors = [
     { name = "Sunil12Subu", email = "sunil.subramaniam.s@gmail.com" }
