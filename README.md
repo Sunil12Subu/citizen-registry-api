@@ -134,6 +134,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Docker.
 uv sync                                   # create .venv and install everything
 docker compose up -d db                   # database only
 uv run alembic upgrade head               # create tables
+uv run python scripts/seed_data.py        # optional: 100 synthetic citizens for demos
 uv run uvicorn citizen_registry_api.main:app --reload
 ```
 
@@ -174,6 +175,10 @@ src/citizen_registry_api/
 migrations/            Alembic migrations
 tests/                 unit + integration tests
 ```
+## Design decisions
+
+- [ADR 0001: Aadhaar stored as an HMAC hash + last 4 digits](docs/adr/0001-hmac-for-aadhaar.md)
+- [ADR 0002: Erasure as anonymisation, not deletion](docs/adr/0002-soft-erasure.md)
 
 ## Known limitations & next steps
 
