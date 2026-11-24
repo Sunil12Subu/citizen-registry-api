@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16-alpine          # Official image; "alpine" = small download
     container_name: registry-db
+    restart: unless-stopped   # start again automatically when Docker Desktop starts
     environment:
       # Values come from .env. ":?" stops startup with an error if one is missing.
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}

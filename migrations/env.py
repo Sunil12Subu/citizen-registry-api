@@ -15,9 +15,12 @@ from citizen_registry_api.models import Base
 
 config = context.config
 
-# Inject the real DB URL at runtime. "%" is escaped because .ini files treat it as special.
-db_url = get_settings().database_url.get_secret_value()
-config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
+# Use the app's DB URL from .env, unless the caller already set one
+# (the test suite points Alembic at the test database this way).
+# "%" is escaped because .ini files treat it as special.
+if not config.get_main_option("sqlalchemy.url"):
+    db_url = get_settings().database_url.get_secret_value()
+    config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
